@@ -7,6 +7,7 @@ use App\OptionsResolver\ProductOptionsResolver;
 use App\Repository\CategoryRepository;
 use App\Repository\ProductCategoryRepository;
 use App\Repository\ProductRepository;
+use App\Service\ProductService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\ORM\OptimisticLockException;
@@ -25,20 +26,35 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 class ProductController extends AbstractController
 {
     //TODO: add pagination
-    #[Route('/products', name: 'products', methods: ["GET"])]
-    public function index(ProductRepository $productRepository): JsonResponse
+    /**
+     * @throws BadRequestHttpException
+     */
+    #[Route('/products', name: 'products', methods: ["GET"], format: "json")]
+    public function index(Request $request, ProductOptionsResolver $productOptionsResolver, ProductService $productService): JsonResponse
     {
-        return $this->json($productRepository->findAll(), context: ['groups' => ['product']]);
+        $options = $request->query->all();
+        $options['user_id'] = $request->query->getInt('user_id');
+        $resolvedOptions = $productOptionsResolver->configureIndexOptions()->resolve($options);
+        $products = $productService->getPaginatedResults($resolvedOptions['user_id']);
+        return $this->json($products, context: ['groups' => ['product']]);
     }
 
-    #[Route('/products/{id}', name: 'product_get', methods: ["GET"])]
-    public function get(Product $product): JsonResponse
+
+    #[Route('/products/{id}', name: 'product_get', methods: ["GET"], format: "json")]
+    public function get(Product        $product, ProductOptionsResolver $productOptionsResolver,
+                        ProductService $productService, Request $request): JsonResponse
     {
+        $options = $request->query->all();
+        $options['user_id'] = $request->query->getInt('user_id');
+        $resolvedOptions = $productOptionsResolver->configureIndexOptions()->resolve($options);
+        $productService->alterPrice($product, $resolvedOptions['user_id']);
         return $this->json($product, context: ['groups' => ['product']]);
     }
 
-    #[Route('/products', name: 'product_create', methods: ["POST"])]
-    public function create(Request $request, ValidatorInterface $validator, ProductRepository $productRepository, ProductOptionsResolver $productOptionsResolver, CategoryRepository $categoryRepository, ProductCategoryRepository $productCategoryRepository, EntityManagerInterface $manager): JsonResponse
+    #[Route('/products', name: 'product_create', methods: ["POST"], format: "json")]
+    public function create(Request                $request, ValidatorInterface $validator, ProductRepository $productRepository,
+                           ProductOptionsResolver $productOptionsResolver,
+                           EntityManagerInterface $manager): JsonResponse
     {
         try {
             $requestBody = json_decode($request->getContent(), true);
@@ -71,7 +87,7 @@ class ProductController extends AbstractController
      * @throws OptimisticLockException
      * @throws ORMException
      */
-    #[Route("/products/{id}", "product_delete", methods: ["DELETE"])]
+    #[Route("/products/{id}", "product_delete", methods: ["DELETE"], format: "json")]
     public function delete(Product $product, ProductRepository $productRepository): JsonResponse
     {
         $productRepository->remove($product);
@@ -79,7 +95,7 @@ class ProductController extends AbstractController
         return $this->json(null, Response::HTTP_NO_CONTENT);
     }
 
-    #[Route("/products/{id}", "product_update", methods: ["PATCH", "PUT"])]
+    #[Route("/products/{id}", "product_update", methods: ["PATCH", "PUT"], format: "json")]
     public function update(Product $product, Request $request, ProductOptionsResolver $productOptionsResolver, ValidatorInterface $validator, EntityManagerInterface $manager, CategoryRepository $categoryRepository, ProductCategoryRepository $productCategoryRepository): JsonResponse
     {
         $isPutMethod = $request->getMethod() === "PUT";

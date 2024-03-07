@@ -23,7 +23,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 #[Route("/api")]
 class CategoryController extends AbstractController
 {
-    #[Route('/categories', name: 'categories', methods: ["GET"])]
+    #[Route('/categories', name: 'categories', methods: ["GET"], format: "json")]
     public function index(CategoryRepository $categoryRepository): JsonResponse
     {
         return $this->json($categoryRepository->findAll(), context: ['groups' => ['category']]);
@@ -35,7 +35,7 @@ class CategoryController extends AbstractController
         return $this->json($category, context: ['groups' => ['category']]);
     }
 
-    #[Route('/categories', name: 'category_create', methods: ["POST"])]
+    #[Route('/categories', name: 'category_create', methods: ["POST"], format: "json")]
     public function create(Request $request, ValidatorInterface $validator, CategoryRepository $categoryRepository, CategoryOptionsResolver $categoryOptionsResolver): JsonResponse
     {
         try {
@@ -66,7 +66,7 @@ class CategoryController extends AbstractController
      * @throws OptimisticLockException
      * @throws ORMException
      */
-    #[Route("/categories/{id}", "category_delete", methods: ["DELETE"])]
+    #[Route("/categories/{id}", "category_delete", methods: ["DELETE"], format: "json")]
     public function delete(Category $category, CategoryRepository $categoryRepository): JsonResponse
     {
         $categoryRepository->remove($category);
@@ -74,7 +74,7 @@ class CategoryController extends AbstractController
         return $this->json(null, Response::HTTP_NO_CONTENT);
     }
 
-    #[Route("/categories/{id}", "category_update", methods: ["PATCH", "PUT"])]
+    #[Route("/categories/{id}", "category_update", methods: ["PATCH", "PUT"], format: "json")]
     public function update(Category $category, Request $request, CategoryOptionsResolver $categoryOptionsResolver, ValidatorInterface $validator, EntityManagerInterface $manager): JsonResponse
     {
         $isPutMethod = $request->getMethod() === "PUT";

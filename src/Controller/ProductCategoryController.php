@@ -25,19 +25,19 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 class ProductCategoryController extends AbstractController
 {
     //TODO: add pagination
-    #[Route('/product-categories', name: 'product_categories', methods: ["GET"])]
+    #[Route('/product-categories', name: 'product_categories', methods: ["GET"], format: "json")]
     public function index(ProductCategoryRepository $productCategoryRepository): JsonResponse
     {
         return $this->json($productCategoryRepository->findAll(), context: ['groups' => ['product_category']]);
     }
 
-    #[Route('/product-categories/{id}', name: 'product_categories_get', methods: ["GET"])]
+    #[Route('/product-categories/{id}', name: 'product_categories_get', methods: ["GET"], format: "json")]
     public function get(ProductCategory $productCategory): JsonResponse
     {
         return $this->json($productCategory);
     }
 
-    #[Route('/product-categories', name: 'product_categories_create', methods: ["POST"])]
+    #[Route('/product-categories', name: 'product_categories_create', methods: ["POST"], format: "json")]
     public function create(Request                        $request, ValidatorInterface $validator, ProductRepository $productRepository,
                            ProductCategoryOptionsResolver $productCategoryOptionsResolver,
                            CategoryRepository             $categoryRepository, ProductCategoryRepository $productCategoryRepository,
@@ -76,7 +76,7 @@ class ProductCategoryController extends AbstractController
      * @throws OptimisticLockException
      * @throws ORMException
      */
-    #[Route("/product-categories/{id}", "product_categories_delete", methods: ["DELETE"])]
+    #[Route("/product-categories/{id}", "product_categories_delete", methods: ["DELETE"], format: "json")]
     public function delete(ProductCategory $productCategory, ProductCategoryRepository $productCategoryRepository): JsonResponse
     {
         $productCategoryRepository->remove($productCategory);
@@ -84,7 +84,7 @@ class ProductCategoryController extends AbstractController
         return $this->json(null, Response::HTTP_NO_CONTENT);
     }
 
-    #[Route("/product-categories/{id}", "product_categories_update", methods: ["PATCH", "PUT"])]
+    #[Route("/product-categories/{id}", "product_categories_update", methods: ["PATCH", "PUT"], format: "json")]
     public function update(ProductCategory                $productCategory, Request $request,
                            ProductCategoryOptionsResolver $productCategoryOptionsResolver,
                            ValidatorInterface             $validator,
