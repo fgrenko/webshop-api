@@ -23,4 +23,14 @@ class ProductOptionsResolver extends OptionsResolver
         }
         return $this;
     }
+
+    public function configureIndexOptions(): self
+    {
+        $this
+            ->setDefined("user_id")
+            ->setAllowedTypes("user_id", "int")
+            ->setRequired("user_id");
+
+        return $this;
+    }
 }
