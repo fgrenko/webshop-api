@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Entity\Product;
 use App\Repository\PriceListRepository;
 use App\Repository\ProductRepository;
+use App\Repository\UserRepository;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Symfony\Contracts\Service\Attribute\Required;
 
@@ -14,9 +15,12 @@ class ProductService
     public ProductRepository $productRepository;
     #[Required]
     public PriceListRepository $priceListRepository;
+    #[Required]
+    public UserRepository $userRepository;
 
-    function getPaginatedResults(int $userType, $page = 1, $limit = 10)
+    function getPaginatedResults(int $userId, $page = 1, $limit = 10)
     {
+        $user = $this->userRepository->find($userId);
         $query = $this->productRepository->createQueryBuilder('p')
             ->select('p', 'pl') // Select both Product and PriceList
             ->leftJoin('p.priceLists', 'pl') // Left join PriceList entity
@@ -29,17 +33,9 @@ class ProductService
 
         $products = $paginator->getIterator()->getArrayCopy();
         foreach ($products as &$product) {
-            $this->alterPrice($product, $userType);
+            $product->setPrice($this->productRepository->findPriceForUser($product, $user));
         }
 
         return $products;
-    }
-
-    function alterPrice(Product $product, int $userType): void
-    {
-        $price = $this->priceListRepository->findPriceByProductAndType($product, $userType);
-        if ($price != null) {
-            $product->setPrice($price);
-        }
     }
 }

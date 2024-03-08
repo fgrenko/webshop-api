@@ -3,9 +3,12 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 //Add more if necessary
 const ROLE_RETAIL = 0;
@@ -15,11 +18,13 @@ const ROLE_SERVICE = 1;
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
+    #[Groups(["contract_list"])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
+    #[Groups(["contract_list"])]
     #[ORM\Column(length: 180)]
     private ?string $email = null;
 
@@ -35,26 +40,37 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?string $password = null;
 
+    #[Groups(["contract_list"])]
     #[ORM\Column(length: 255)]
     private ?string $firstName = null;
 
+    #[Groups(["contract_list"])]
     #[ORM\Column(length: 255)]
     private ?string $lastName = null;
 
+    #[Groups(["contract_list"])]
     #[ORM\Column(length: 25)]
     private ?string $phoneNumber = null;
-
+    #[Groups(["contract_list"])]
     #[ORM\Column(length: 255)]
     private ?string $address = null;
-
+    #[Groups(["contract_list"])]
     #[ORM\Column(length: 255)]
     private ?string $city = null;
-
+    #[Groups(["contract_list"])]
     #[ORM\Column(length: 255)]
     private ?string $country = null;
-
+    #[Groups(["contract_list"])]
     #[ORM\Column]
     private ?int $type = ROLE_RETAIL;
+
+    #[ORM\OneToMany(targetEntity: ContractList::class, mappedBy: 'user', orphanRemoval: true)]
+    private Collection $contractLists;
+
+    public function __construct()
+    {
+        $this->contractLists = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -211,6 +227,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setType(int $type): static
     {
         $this->type = $type;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ContractList>
+     */
+    public function getContractLists(): Collection
+    {
+        return $this->contractLists;
+    }
+
+    public function addContractList(ContractList $contractList): static
+    {
+        if (!$this->contractLists->contains($contractList)) {
+            $this->contractLists->add($contractList);
+            $contractList->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeContractList(ContractList $contractList): static
+    {
+        if ($this->contractLists->removeElement($contractList)) {
+            // set the owning side to null (unless already changed)
+            if ($contractList->getUser() === $this) {
+                $contractList->setUser(null);
+            }
+        }
 
         return $this;
     }

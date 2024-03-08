@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Product;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
@@ -51,6 +52,36 @@ class ProductRepository extends ServiceEntityRepository
             $this->entityManager->flush();
         }
     }
+
+    public function findPriceForUser(Product $product, User $user = null): ?float
+    {
+        $queryBuilder = $this->createQueryBuilder('p')
+            ->select('CASE
+            WHEN cl.price IS NOT NULL THEN cl.price
+            WHEN pl.price IS NOT NULL THEN pl.price
+            ELSE p.price
+            END AS final_price')
+            ->leftJoin('p.contractLists', 'cl')
+            ->leftJoin('p.priceLists', 'pl')
+            ->andWhere('p.sku = :sku')
+            ->setParameter('sku', $product->getSku());
+
+        if ($user) {
+            $queryBuilder
+                ->andWhere('cl.user = :userId OR (pl.type = :userType AND cl.user IS NULL)')
+                ->setParameter('userId', $user->getId())
+                ->setParameter('userType', $user->getType());
+        }
+
+        $result = $queryBuilder->getQuery()->getOneOrNullResult();
+
+        if ($result !== null) {
+            return (float)$result['final_price'];
+        }
+
+        return $product->getPrice();
+    }
+
 
     //    /**
     //     * @return Product[] Returns an array of Product objects
