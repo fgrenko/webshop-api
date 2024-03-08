@@ -14,26 +14,26 @@ use Doctrine\ORM\Mapping as ORM;
 #[UniqueEntity("sku")]
 class Product
 {
-    #[Groups(["product_category", "product", "category", "price_list"])]
+    #[Groups(["product_category", "product", "category", "price_list", "contract_list"])]
     #[ORM\Id]
     #[ORM\Column(length: 64)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 64)]
     private ?string $sku = null;
-    #[Groups(["product_category", "product", "category", "price_list"])]
+    #[Groups(["product_category", "product", "category", "price_list", "contract_list"])]
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
     private ?string $name = null;
-    #[Groups(["product_category", "product", "category", "price_list"])]
+    #[Groups(["product_category", "product", "category", "price_list", "contract_list"])]
     #[ORM\Column(length: 255, nullable: true)]
     #[Assert\Length(max: 255)]
     private ?string $description = null;
-    #[Groups(["product_category", "product", "category", "price_list"])]
+    #[Groups(["product_category", "product", "category", "price_list", "contract_list"])]
     #[ORM\Column]
     #[Assert\NotBlank]
     private ?float $price = null;
-    #[Groups(["product_category", "product", "category", "price_list"])]
+    #[Groups(["product_category", "product", "category", "price_list", "contract_list"])]
     #[ORM\Column]
     #[Assert\NotBlank]
     private ?bool $published = null;
@@ -45,10 +45,14 @@ class Product
     #[ORM\OneToMany(targetEntity: PriceList::class, mappedBy: 'product', orphanRemoval: true)]
     private Collection $priceLists;
 
+    #[ORM\OneToMany(targetEntity: ContractList::class, mappedBy: 'product', orphanRemoval: true)]
+    private Collection $contractLists;
+
     public function __construct()
     {
         $this->productCategories = new ArrayCollection();
         $this->priceLists = new ArrayCollection();
+        $this->contractLists = new ArrayCollection();
     }
 
     public function getSku(): ?string
@@ -165,6 +169,36 @@ class Product
             // set the owning side to null (unless already changed)
             if ($priceList->getProduct() === $this) {
                 $priceList->setProduct(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ContractList>
+     */
+    public function getContractLists(): Collection
+    {
+        return $this->contractLists;
+    }
+
+    public function addContractList(ContractList $contractList): static
+    {
+        if (!$this->contractLists->contains($contractList)) {
+            $this->contractLists->add($contractList);
+            $contractList->setProduct($this);
+        }
+
+        return $this;
+    }
+
+    public function removeContractList(ContractList $contractList): static
+    {
+        if ($this->contractLists->removeElement($contractList)) {
+            // set the owning side to null (unless already changed)
+            if ($contractList->getProduct() === $this) {
+                $contractList->setProduct(null);
             }
         }
 

@@ -18,12 +18,21 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
-
+use Symfony\Contracts\Service\Attribute\Required;
 
 //TODO: add pagination
 #[Route("/api")]
 class PriceListController extends AbstractController
 {
+    #[Required]
+    public PriceListRepository $priceListRepository;
+    #[Required]
+    public ValidatorInterface $validator;
+    #[Required]
+    public PriceListOptionsResolver $priceListOptionsResolver;
+    #[Required]
+    public ProductRepository $productRepository;
+
     #[Route('/price-lists', name: 'price-list', methods: ["GET"], format: "json")]
     public function index(PriceListRepository $priceListRepository): JsonResponse
     {
@@ -37,25 +46,25 @@ class PriceListController extends AbstractController
     }
 
     #[Route('/price-lists', name: 'price_list_create', methods: ["POST"], format: "json")]
-    public function create(Request $request, ValidatorInterface $validator, PriceListRepository $priceListRepository, PriceListOptionsResolver $priceListOptionsResolver, ProductRepository $productRepository): JsonResponse
+    public function create(Request $request): JsonResponse
     {
         try {
             $requestBody = json_decode($request->getContent(), true);
-            $fields = $priceListOptionsResolver->configureCreateOptions()->resolve($requestBody);
+            $fields = $this->priceListOptionsResolver->configureCreateOptions()->resolve($requestBody);
 
             $priceList = new PriceList();
             $priceList->setName($fields['name']);
             $priceList->setPrice($fields['price']);
-            $product = $productRepository->find($fields['product']);
+            $product = $this->productRepository->find($fields['product']);
             $priceList->setProduct($product);
             $priceList->setType($fields['type']);
 
-            $errors = $validator->validate($priceList);
+            $errors = $this->validator->validate($priceList);
             if (count($errors) > 0) {
                 throw new InvalidArgumentException((string)$errors);
             }
 
-            $priceListRepository->add($priceList);
+            $this->priceListRepository->add($priceList);
 
             return $this->json($priceList, status: Response::HTTP_CREATED, context: ['groups' => ['price_list']]);
         } catch (\Exception $e) {
@@ -70,22 +79,20 @@ class PriceListController extends AbstractController
      * @throws ORMException
      */
     #[Route("/price-lists/{id}", "price_list_delete", methods: ["DELETE"], format: "json")]
-    public function delete(PriceList $priceList, PriceListRepository $priceListRepository): JsonResponse
+    public function delete(PriceList $priceList): JsonResponse
     {
-        $priceListRepository->remove($priceList);
+        $this->priceListRepository->remove($priceList);
 
         return $this->json(null, Response::HTTP_NO_CONTENT);
     }
 
     #[Route("/price-lists/{id}", "price_list_update", methods: ["PATCH", "PUT"], format: "json")]
-    public function update(PriceList          $priceList, Request $request, PriceListOptionsResolver $priceListOptionsResolver,
-                           ValidatorInterface $validator, EntityManagerInterface $manager,
-                           ProductRepository  $productRepository): JsonResponse
+    public function update(PriceList $priceList, Request $request, EntityManagerInterface $manager): JsonResponse
     {
         $isPutMethod = $request->getMethod() === "PUT";
         try {
             $requestBody = json_decode($request->getContent(), true);
-            $fields = $priceListOptionsResolver->configureCreateOptions($isPutMethod)->resolve($requestBody);
+            $fields = $this->priceListOptionsResolver->configureCreateOptions($isPutMethod)->resolve($requestBody);
             foreach ($fields as $field => $value) {
                 switch ($field) {
                     case "name":
@@ -95,7 +102,7 @@ class PriceListController extends AbstractController
                         $priceList->setPrice($value);
                         break;
                     case "product":
-                        $product = $productRepository->find($value);
+                        $product = $this->productRepository->find($value);
                         $priceList->setProduct($product);
                         break;
                     case "type":
@@ -104,7 +111,7 @@ class PriceListController extends AbstractController
                 }
             }
 
-            $errors = $validator->validate($priceList);
+            $errors = $this->validator->validate($priceList);
             if (count($errors) > 0) {
                 throw new InvalidArgumentException((string)$errors);
             }
