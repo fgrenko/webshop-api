@@ -14,13 +14,13 @@ use Doctrine\ORM\Mapping as ORM;
 #[UniqueEntity("sku")]
 class Product
 {
-    #[Groups(["product_category", "product", "category", "price_list", "contract_list"])]
+    #[Groups(["product_category", "product", "category", "price_list", "contract_list", "order"])]
     #[ORM\Id]
     #[ORM\Column(length: 64)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 64)]
     private ?string $sku = null;
-    #[Groups(["product_category", "product", "category", "price_list", "contract_list"])]
+    #[Groups(["product_category", "product", "category", "price_list", "contract_list", "order"])]
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
@@ -48,11 +48,15 @@ class Product
     #[ORM\OneToMany(targetEntity: ContractList::class, mappedBy: 'product', orphanRemoval: true)]
     private Collection $contractLists;
 
+    #[ORM\OneToMany(targetEntity: OrderProduct::class, mappedBy: 'product')]
+    private Collection $orderProducts;
+
     public function __construct()
     {
         $this->productCategories = new ArrayCollection();
         $this->priceLists = new ArrayCollection();
         $this->contractLists = new ArrayCollection();
+        $this->orderProducts = new ArrayCollection();
     }
 
     public function getSku(): ?string
@@ -199,6 +203,36 @@ class Product
             // set the owning side to null (unless already changed)
             if ($contractList->getProduct() === $this) {
                 $contractList->setProduct(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, OrderProduct>
+     */
+    public function getOrderProducts(): Collection
+    {
+        return $this->orderProducts;
+    }
+
+    public function addOrderProduct(OrderProduct $orderProduct): static
+    {
+        if (!$this->orderProducts->contains($orderProduct)) {
+            $this->orderProducts->add($orderProduct);
+            $orderProduct->setProduct($this);
+        }
+
+        return $this;
+    }
+
+    public function removeOrderProduct(OrderProduct $orderProduct): static
+    {
+        if ($this->orderProducts->removeElement($orderProduct)) {
+            // set the owning side to null (unless already changed)
+            if ($orderProduct->getProduct() === $this) {
+                $orderProduct->setProduct(null);
             }
         }
 

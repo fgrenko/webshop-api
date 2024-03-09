@@ -2,11 +2,14 @@
 
 namespace App\DataFixtures;
 
+use App\Entity\PriceModificator;
 use App\Entity\User;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Contracts\Service\Attribute\Required;
+use const App\Entity\TYPE_DISCOUNT;
+use const App\Entity\TYPE_VAT;
 
 class AppFixtures extends Fixture
 {
@@ -25,8 +28,19 @@ class AppFixtures extends Fixture
         $user->setCity("Zagreb");
         $user->setCountry("Croatia");
 
-
         $manager->persist($user);
+
+        $vat = new PriceModificator();
+        $vat->setType(TYPE_VAT);
+        $vat->setPercentage(23);
+        $vat->setName("VAT");
+        $manager->persist($vat);
+
+        $discount = new PriceModificator();
+        $discount->setType(TYPE_DISCOUNT);
+        $discount->setName("SPRING");
+        $discount->setPercentage(5);
+        $manager->persist($discount);
         $manager->flush();
     }
 }
