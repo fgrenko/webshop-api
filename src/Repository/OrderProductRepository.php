@@ -1,0 +1,79 @@
+<?php
+
+namespace App\Repository;
+
+use App\Entity\OrderProduct;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Exception\ORMException;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Contracts\Service\Attribute\Required;
+
+/**
+ * @extends ServiceEntityRepository<OrderProduct>
+ *
+ * @method OrderProduct|null find($id, $lockMode = null, $lockVersion = null)
+ * @method OrderProduct|null findOneBy(array $criteria, array $orderBy = null)
+ * @method OrderProduct[]    findAll()
+ * @method OrderProduct[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ */
+class OrderProductRepository extends ServiceEntityRepository
+{
+    #[Required]
+    public EntityManagerInterface $entityManager;
+
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, OrderProduct::class);
+    }
+
+    /**
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    public function add(OrderProduct $entity, bool $flush = true): void
+    {
+        $this->entityManager->persist($entity);
+        if ($flush) {
+            $this->entityManager->flush();
+        }
+    }
+
+    /**
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    public function remove(OrderProduct $entity, bool $flush = true): void
+    {
+        $this->entityManager->remove($entity);
+        if ($flush) {
+            $this->entityManager->flush();
+        }
+    }
+
+//    /**
+//     * @return OrderProduct[] Returns an array of OrderProduct objects
+//     */
+//    public function findByExampleField($value): array
+//    {
+//        return $this->createQueryBuilder('o')
+//            ->andWhere('o.exampleField = :val')
+//            ->setParameter('val', $value)
+//            ->orderBy('o.id', 'ASC')
+//            ->setMaxResults(10)
+//            ->getQuery()
+//            ->getResult()
+//        ;
+//    }
+
+//    public function findOneBySomeField($value): ?OrderProduct
+//    {
+//        return $this->createQueryBuilder('o')
+//            ->andWhere('o.exampleField = :val')
+//            ->setParameter('val', $value)
+//            ->getQuery()
+//            ->getOneOrNullResult()
+//        ;
+//    }
+}

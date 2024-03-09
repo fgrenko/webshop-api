@@ -7,7 +7,6 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Attribute\Groups;
 
-//todo: unique entity doesnt work - radi samo validacija preko asssert, ne preko baze
 #[ORM\Entity(repositoryClass: ProductCategoryRepository::class)]
 #[UniqueEntity(fields: ['product', 'category'])]
 #[ORM\UniqueConstraint(name: "unique_product_category", columns: ['product_id', 'category_id'])]

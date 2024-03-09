@@ -28,8 +28,7 @@ class ProductOptionsResolver extends OptionsResolver
     {
         $this
             ->setDefined("user_id")
-            ->setAllowedTypes("user_id", "int")
-            ->setRequired("user_id");
+            ->setAllowedTypes("user_id", "int");
 
         return $this;
     }
