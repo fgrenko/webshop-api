@@ -58,6 +58,9 @@ class CategoryController extends AbstractController
         return $this->json($category, context: ['groups' => ['category']]);
     }
 
+    /**
+     * @throws \Exception
+     */
     #[Route('/categories/{id}/products', name: 'category_get', methods: ["GET"])]
     public function getCategoryProducts(Category $category, Request $request): JsonResponse
     {
