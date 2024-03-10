@@ -38,19 +38,26 @@ class ContractListController extends AbstractController
     public UserRepository $userRepository;
 
     #[Route('/contract-lists', name: 'contract_list', methods: ["GET"], format: "json")]
-    public function index(): JsonResponse
+    public function indexContractList(Request $request): JsonResponse
     {
-        return $this->json($this->contractListRepository->findAll(), context: ['groups' => ['contract_list']]);
+        $limit = $request->query->get('limit');
+        $page = $request->query->get('page');
+
+        // Convert to int if not null, otherwise keep as null
+        $limit = $limit !== null ? (int)$limit : 10;
+        $page = $page !== null ? (int)$page : 1;
+
+        return $this->json($this->contractListRepository->getPaginatedResults($page, $limit), context: ['groups' => ['contract_list']]);
     }
 
     #[Route('/contract-lists/{id}', name: 'contract_list_get', methods: ["GET"])]
-    public function get(ContractList $contractList): JsonResponse
+    public function getContractList(ContractList $contractList): JsonResponse
     {
         return $this->json($contractList, context: ['groups' => ['contract_list']]);
     }
 
     #[Route('/contract-lists', name: 'contract_list_create', methods: ["POST"], format: "json")]
-    public function create(Request $request): JsonResponse
+    public function createContractList(Request $request): JsonResponse
     {
         try {
             $requestBody = json_decode($request->getContent(), true);
@@ -82,7 +89,7 @@ class ContractListController extends AbstractController
      * @throws ORMException
      */
     #[Route("/contract-lists/{id}", "contract_list_delete", methods: ["DELETE"], format: "json")]
-    public function delete(ContractList $contractList): JsonResponse
+    public function deleteContractList(ContractList $contractList): JsonResponse
     {
         $this->contractListRepository->remove($contractList);
 
@@ -90,7 +97,7 @@ class ContractListController extends AbstractController
     }
 
     #[Route("/contract-lists/{id}", "contract_list_update", methods: ["PATCH", "PUT"], format: "json")]
-    public function update(ContractList $contractList, Request $request, EntityManagerInterface $manager): JsonResponse
+    public function updateContractList(ContractList $contractList, Request $request, EntityManagerInterface $manager): JsonResponse
     {
         $isPutMethod = $request->getMethod() === "PUT";
         try {

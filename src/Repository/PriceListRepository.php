@@ -7,6 +7,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Contracts\Service\Attribute\Required;
 
@@ -52,6 +53,19 @@ class PriceListRepository extends ServiceEntityRepository
         }
     }
 
+    public function getPaginatedResults($page = 1, $limit = 10)
+    {
+        $query = $this->createQueryBuilder('pl')
+            ->select('pl')
+            ->getQuery();
+
+        $paginator = new Paginator($query);
+        $paginator->getQuery()
+            ->setFirstResult(($page - 1) * $limit)
+            ->setMaxResults($limit);
+
+        return $paginator->getIterator()->getArrayCopy();
+    }
 
     //    /**
     //     * @return PriceList[] Returns an array of PriceList objects

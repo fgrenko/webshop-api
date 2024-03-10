@@ -7,6 +7,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Contracts\Service\Attribute\Required;
 
@@ -50,6 +51,20 @@ class ContractListRepository extends ServiceEntityRepository
         if ($flush) {
             $this->entityManager->flush();
         }
+    }
+
+    public function getPaginatedResults($page = 1, $limit = 10)
+    {
+        $query = $this->createQueryBuilder('cl')
+            ->select('cl')
+            ->getQuery();
+
+        $paginator = new Paginator($query);
+        $paginator->getQuery()
+            ->setFirstResult(($page - 1) * $limit)
+            ->setMaxResults($limit);
+
+        return $paginator->getIterator()->getArrayCopy();
     }
 
     //    /**

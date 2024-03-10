@@ -8,28 +8,26 @@ class ProductOptionsResolver extends OptionsResolver
 {
     public function configureCreateOptions(bool $isRequired = true): self
     {
-        $this->setDefined("name")->setAllowedTypes("name", "string");
-        $this->setDefined("description")->setAllowedTypes("description", "string");
-        $this->setDefined("sku")->setAllowedTypes("sku", "string");
-        $this->setDefined("price")->setAllowedTypes("price", "float");
-        $this->setDefined("published")->setAllowedTypes("published", "boolean");
+        $this
+            ->setDefined("name")
+            ->setAllowedTypes("name", "string")
+            ->setDefined("description")
+            ->setAllowedTypes("description", "string")
+            ->setDefined("sku")
+            ->setAllowedTypes("sku", "string")
+            ->setDefined("price")
+            ->setAllowedTypes("price", "float")
+            ->setDefined("published")
+            ->setAllowedTypes("published", "boolean");
 
 
         if ($isRequired) {
-            $this->setRequired("name");
-            $this->setRequired("sku");
-            $this->setRequired("price");
-            $this->setRequired("published");
+            $this
+                ->setRequired("name")
+                ->setRequired("sku")
+                ->setRequired("price")
+                ->setRequired("published");
         }
-        return $this;
-    }
-
-    public function configureIndexOptions(): self
-    {
-        $this
-            ->setDefined("user_id")
-            ->setAllowedTypes("user_id", "int");
-
         return $this;
     }
 }
