@@ -47,7 +47,7 @@ final class CategoryFactory extends ModelFactory
     protected function getDefaults(): array
     {
         return [
-            'name' => self::faker()->text(50),
+            'description' => self::faker()->sentence,
         ];
     }
 

@@ -8,8 +8,8 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: PriceListRepository::class)]
-#[UniqueEntity(fields: ['product', 'type'])]
-#[ORM\UniqueConstraint(name: "unique_price_list", columns: ['product_id', 'type'])]
+#[UniqueEntity(fields: ['product', 'userType'])]
+#[ORM\UniqueConstraint(name: "unique_price_list", columns: ['product_id', 'user_type'])]
 class PriceList
 {
     #[Groups(["price_list"])]
@@ -30,7 +30,7 @@ class PriceList
 
     #[Groups(["price_list"])]
     #[ORM\Column]
-    private ?int $type = null;
+    private ?int $userType = null;
 
     public function getId(): ?int
     {
@@ -73,14 +73,14 @@ class PriceList
         return $this;
     }
 
-    public function getType(): ?int
+    public function getUserType(): ?int
     {
-        return $this->type;
+        return $this->userType;
     }
 
-    public function setType(int $type): static
+    public function setUserType(int $userType): static
     {
-        $this->type = $type;
+        $this->userType = $userType;
 
         return $this;
     }
