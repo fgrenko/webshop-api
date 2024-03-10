@@ -32,8 +32,6 @@ class ProductController extends AbstractController
     #[Required]
     public ValidatorInterface $validator;
 
-    //TODO: add pagination
-
     /**
      * @throws BadRequestHttpException
      * @throws Exception
@@ -50,9 +48,17 @@ class ProductController extends AbstractController
         $limit = $limit !== null ? (int)$limit : 10;
         $page = $page !== null ? (int)$page : 1;
 
-
         $products = $this->productRepository->getPaginatedResults($userId, $page, $limit);
         return $this->json($products, context: ['groups' => ['product']]);
+    }
+
+    /**
+     * @throws Exception
+     */
+    #[Route('/products/filter', name: 'products_filter', methods: ["GET"], format: "json")]
+    public function filterProduct(Request $request): JsonResponse
+    {
+        return $this->json($this->productRepository->getFilteredResults($request->query->all()), context: ['groups' => ['product']]);
     }
 
 

@@ -113,12 +113,15 @@ class ProductRepository extends ServiceEntityRepository
         return $products;
     }
 
+    /**
+     * @throws \Exception
+     */
     public function getPaginatedResultsByCategory(Category $category, $page = 1, $limit = 10)
     {
         $query = $this->createQueryBuilder('p') // Use 'p' as the alias for the Product entity
-        ->select('p')
-            ->leftJoin('p.productCategories', 'pc') // Assuming 'productCategories' is the property representing the relationship between Product and ProductCategory
-            ->leftJoin('pc.category', 'c') // Assuming 'category' is the property representing the relationship between ProductCategory and Category
+        ->select('p',)
+            ->leftJoin('p.productCategories', 'pc')
+            ->leftJoin('pc.category', 'c')
             ->andWhere('c = :category')
             ->setParameter('category', $category)
             ->getQuery();
@@ -133,29 +136,95 @@ class ProductRepository extends ServiceEntityRepository
         return $products;
     }
 
+    /**
+     * @throws \Exception
+     */
+    public function getFilteredResults(array $options)
+    {
+        $limit = array_key_exists('limit', $options) ? (int)$options['limit'] : 10;
+        $page = array_key_exists('page', $options) ? (int)$options['page'] : 1;
 
-    //    /**
-    //     * @return Product[] Returns an array of Product objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('p')
-    //            ->andWhere('p.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('p.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
 
-    //    public function findOneBySomeField($value): ?Product
-    //    {
-    //        return $this->createQueryBuilder('p')
-    //            ->andWhere('p.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+        $query = $this->createQueryBuilder('p')
+            ->select('p', 'CASE
+            WHEN cl.price IS NOT NULL THEN cl.price
+            WHEN pl.price IS NOT NULL THEN pl.price
+            ELSE p.price
+            END AS real_price')
+            ->leftJoin('p.contractLists', 'cl')
+            ->leftJoin('p.priceLists', 'pl');
+
+        if (array_key_exists('user_id', $options)) {
+            $options['user_id'] = $options['user_id'] !== null ? (int)$options['user_id'] : null;
+            $user = $this->userRepository->find($options['user_id']);
+            if ($user) {
+                $query
+                    ->andWhere('(
+                    cl.user = :userId OR
+                    (pl.type = :userType AND cl.user IS NULL) OR
+                    (cl.id IS NULL AND pl.id IS NULL)
+                )')
+                    ->setParameter('userId', $user->getId())
+                    ->setParameter('userType', $user->getType());
+            }
+        }
+
+        if (array_key_exists('name', $options)) {
+            $query
+                ->andWhere('p.name = :name')
+                ->setParameter('name', $options['name']);
+        }
+
+        if (array_key_exists('categoryId', $options)) {
+            $query
+                ->join('p.productCategories', 'pc')
+                ->andWhere('pc.category = :categoryId') // Changed '==' to '='
+                ->setParameter('categoryId', $options['categoryId']);
+        }
+
+        if (array_key_exists('minPrice', $options)) {
+            $query
+                ->andHaving('real_price > :minPrice')
+                ->setParameter('minPrice', (float)$options['minPrice']);
+        }
+
+        if (array_key_exists('maxPrice', $options)) {
+            $query
+                ->andHaving('real_price < :maxPrice')
+                ->setParameter('maxPrice', (float)$options['maxPrice']);
+        }
+
+        $paginator = new Paginator($query);
+        $paginator->getQuery()
+            ->setFirstResult(($page - 1) * $limit)
+            ->setMaxResults($limit);
+
+        return $paginator->getIterator()->getArrayCopy();
+    }
+
+
+//    /**
+//     * @return Product[] Returns an array of Product objects
+//     */
+//    public function findByExampleField($value): array
+//    {
+//        return $this->createQueryBuilder('p')
+//            ->andWhere('p.exampleField = :val')
+//            ->setParameter('val', $value)
+//            ->orderBy('p.id', 'ASC')
+//            ->setMaxResults(10)
+//            ->getQuery()
+//            ->getResult()
+//        ;
+//    }
+
+//    public function findOneBySomeField($value): ?Product
+//    {
+//        return $this->createQueryBuilder('p')
+//            ->andWhere('p.exampleField = :val')
+//            ->setParameter('val', $value)
+//            ->getQuery()
+//            ->getOneOrNullResult()
+//        ;
+//    }
 }
