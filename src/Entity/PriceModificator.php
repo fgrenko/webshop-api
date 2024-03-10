@@ -31,7 +31,7 @@ class PriceModificator
     private ?string $name = null;
 
     #[Groups(["order"])]
-    #[ORM\Column]
+    #[ORM\Column(type: 'decimal', scale: 2)]
     private ?float $percentage = null;
 
     #[Groups(["order"])]

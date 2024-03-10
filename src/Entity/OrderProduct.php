@@ -31,7 +31,7 @@ class OrderProduct
     private ?Order $orderItem = null;
 
     #[Groups(["order"])]
-    #[ORM\Column]
+    #[ORM\Column(type: 'decimal', scale: 2)]
     private ?float $price = null;
 
     public function getId(): ?int

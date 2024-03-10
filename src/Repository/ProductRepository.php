@@ -2,12 +2,14 @@
 
 namespace App\Repository;
 
+use App\Entity\Category;
 use App\Entity\Product;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Contracts\Service\Attribute\Required;
 
@@ -23,6 +25,8 @@ class ProductRepository extends ServiceEntityRepository
 {
     #[Required]
     public EntityManagerInterface $entityManager;
+    #[Required]
+    public UserRepository $userRepository;
 
     public function __construct(ManagerRegistry $registry)
     {
@@ -80,6 +84,53 @@ class ProductRepository extends ServiceEntityRepository
         }
 
         return $product->getPrice();
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function getPaginatedResults(int $userId = null, $page = 1, $limit = 10)
+    {
+        $user = null;
+        if ($userId) {
+            $user = $this->userRepository->find($userId);
+        }
+        $query = $this->createQueryBuilder('p')
+            ->select('p', 'pl') // Select both Product and PriceList
+            ->leftJoin('p.priceLists', 'pl') // Left join PriceList entity
+            ->getQuery();
+
+        $paginator = new Paginator($query);
+        $paginator->getQuery()
+            ->setFirstResult(($page - 1) * $limit)
+            ->setMaxResults($limit);
+
+        $products = $paginator->getIterator()->getArrayCopy();
+        foreach ($products as &$product) {
+            $product->setPrice($this->findPriceForUser($product, $user));
+        }
+
+        return $products;
+    }
+
+    public function getPaginatedResultsByCategory(Category $category, $page = 1, $limit = 10)
+    {
+        $query = $this->createQueryBuilder('p') // Use 'p' as the alias for the Product entity
+        ->select('p')
+            ->leftJoin('p.productCategories', 'pc') // Assuming 'productCategories' is the property representing the relationship between Product and ProductCategory
+            ->leftJoin('pc.category', 'c') // Assuming 'category' is the property representing the relationship between ProductCategory and Category
+            ->andWhere('c = :category')
+            ->setParameter('category', $category)
+            ->getQuery();
+
+        $paginator = new Paginator($query);
+        $paginator->getQuery()
+            ->setFirstResult(($page - 1) * $limit)
+            ->setMaxResults($limit);
+
+        $products = $paginator->getIterator()->getArrayCopy();
+
+        return $products;
     }
 
 

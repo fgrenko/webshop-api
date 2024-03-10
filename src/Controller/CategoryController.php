@@ -5,6 +5,8 @@ namespace App\Controller;
 use App\Entity\Category;
 use App\OptionsResolver\CategoryOptionsResolver;
 use App\Repository\CategoryRepository;
+use App\Repository\ProductCategoryRepository;
+use App\Repository\ProductRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\ORM\OptimisticLockException;
@@ -19,8 +21,6 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\Service\Attribute\Required;
 
-
-//TODO: add pagination
 #[Route("/api")]
 class CategoryController extends AbstractController
 {
@@ -30,21 +30,48 @@ class CategoryController extends AbstractController
     public CategoryOptionsResolver $categoryOptionsResolver;
     #[Required]
     public ValidatorInterface $validator;
+    #[Required]
+    public ProductCategoryRepository $productCategoryRepository;
+    #[Required]
+    public ProductRepository $productRepository;
 
+    /**
+     * @throws \Exception
+     */
     #[Route('/categories', name: 'categories', methods: ["GET"], format: "json")]
-    public function index(CategoryRepository $categoryRepository): JsonResponse
+    public function indexCategory(Request $request): JsonResponse
     {
-        return $this->json($categoryRepository->findAll(), context: ['groups' => ['category']]);
+        $limit = $request->query->get('limit');
+        $page = $request->query->get('page');
+
+        // Convert to int if not null, otherwise keep as null
+        $limit = $limit !== null ? (int)$limit : 10;
+        $page = $page !== null ? (int)$page : 1;
+
+
+        return $this->json($this->categoryRepository->getPaginatedResults($page, $limit), context: ['groups' => ['category']]);
     }
 
     #[Route('/categories/{id}', name: 'category_get', methods: ["GET"])]
-    public function get(Category $category): JsonResponse
+    public function getCategory(Category $category): JsonResponse
     {
         return $this->json($category, context: ['groups' => ['category']]);
     }
 
+    #[Route('/categories/{id}/products', name: 'category_get', methods: ["GET"])]
+    public function getCategoryProducts(Category $category, Request $request): JsonResponse
+    {
+        $limit = $request->query->get('limit');
+        $page = $request->query->get('page');
+
+        // Convert to int if not null, otherwise keep as null
+        $limit = $limit !== null ? (int)$limit : 10;
+        $page = $page !== null ? (int)$page : 1;
+        return $this->json($this->productRepository->getPaginatedResultsByCategory($category, $page, $limit), context: ['groups' => ['product_category']]);
+    }
+
     #[Route('/categories', name: 'category_create', methods: ["POST"], format: "json")]
-    public function create(Request $request): JsonResponse
+    public function createCategory(Request $request): JsonResponse
     {
         try {
             $requestBody = json_decode($request->getContent(), true);
@@ -75,7 +102,7 @@ class CategoryController extends AbstractController
      * @throws ORMException
      */
     #[Route("/categories/{id}", "category_delete", methods: ["DELETE"], format: "json")]
-    public function delete(Category $category): JsonResponse
+    public function deleteCategory(Category $category): JsonResponse
     {
         $this->categoryRepository->remove($category);
 
@@ -83,7 +110,7 @@ class CategoryController extends AbstractController
     }
 
     #[Route("/categories/{id}", "category_update", methods: ["PATCH", "PUT"], format: "json")]
-    public function update(Category $category, Request $request, EntityManagerInterface $manager): JsonResponse
+    public function updateCategory(Category $category, Request $request, EntityManagerInterface $manager): JsonResponse
     {
         $isPutMethod = $request->getMethod() === "PUT";
         try {

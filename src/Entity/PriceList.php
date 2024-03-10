@@ -21,7 +21,7 @@ class PriceList
     #[ORM\Column(length: 255)]
     private ?string $name = null;
     #[Groups(["price_list"])]
-    #[ORM\Column]
+    #[ORM\Column(type: 'decimal', scale: 2)]
     private ?float $price = null;
     #[Groups(["price_list"])]
     #[ORM\ManyToOne(inversedBy: 'priceLists')]

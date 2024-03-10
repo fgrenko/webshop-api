@@ -34,19 +34,26 @@ class PriceListController extends AbstractController
     public ProductRepository $productRepository;
 
     #[Route('/price-lists', name: 'price-list', methods: ["GET"], format: "json")]
-    public function index(PriceListRepository $priceListRepository): JsonResponse
+    public function indexPriceList(Request $request): JsonResponse
     {
-        return $this->json($priceListRepository->findAll(), context: ['groups' => ['price_list']]);
+        $limit = $request->query->get('limit');
+        $page = $request->query->get('page');
+
+        // Convert to int if not null, otherwise keep as null
+        $limit = $limit !== null ? (int)$limit : 10;
+        $page = $page !== null ? (int)$page : 1;
+
+        return $this->json($this->priceListRepository->getPaginatedResults($page, $limit), context: ['groups' => ['price_list']]);
     }
 
     #[Route('/price-lists/{id}', name: 'price_list_get', methods: ["GET"])]
-    public function get(PriceList $priceList): JsonResponse
+    public function getPriceList(PriceList $priceList): JsonResponse
     {
         return $this->json($priceList, context: ['groups' => ['price_list']]);
     }
 
     #[Route('/price-lists', name: 'price_list_create', methods: ["POST"], format: "json")]
-    public function create(Request $request): JsonResponse
+    public function createPriceList(Request $request): JsonResponse
     {
         try {
             $requestBody = json_decode($request->getContent(), true);
@@ -79,7 +86,7 @@ class PriceListController extends AbstractController
      * @throws ORMException
      */
     #[Route("/price-lists/{id}", "price_list_delete", methods: ["DELETE"], format: "json")]
-    public function delete(PriceList $priceList): JsonResponse
+    public function deletePriceList(PriceList $priceList): JsonResponse
     {
         $this->priceListRepository->remove($priceList);
 
@@ -87,7 +94,7 @@ class PriceListController extends AbstractController
     }
 
     #[Route("/price-lists/{id}", "price_list_update", methods: ["PATCH", "PUT"], format: "json")]
-    public function update(PriceList $priceList, Request $request, EntityManagerInterface $manager): JsonResponse
+    public function updatePriceList(PriceList $priceList, Request $request, EntityManagerInterface $manager): JsonResponse
     {
         $isPutMethod = $request->getMethod() === "PUT";
         try {

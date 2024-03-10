@@ -25,7 +25,7 @@ class ContractList
     #[ORM\JoinColumn(referencedColumnName: "sku", nullable: false)]
     private ?Product $product = null;
     #[Groups(["contract_list"])]
-    #[ORM\Column]
+    #[ORM\Column(type: 'decimal', scale: 2)]
     private ?float $price = null;
 
     public function getId(): ?int

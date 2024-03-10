@@ -10,7 +10,6 @@ use App\Repository\OrderRepository;
 use App\Repository\PriceModificatorRepository;
 use App\Repository\ProductRepository;
 use App\Repository\UserRepository;
-use App\Service\OrderService;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMInvalidArgumentException;
@@ -38,8 +37,6 @@ class OrderController extends AbstractController
     #[Required]
     public UserRepository $userRepository;
     #[Required]
-    public OrderService $orderService;
-    #[Required]
     public ProductRepository $productRepository;
     #[Required]
     public OrderProductRepository $orderProductRepository;
@@ -47,19 +44,26 @@ class OrderController extends AbstractController
     public PriceModificatorRepository $priceModificatorRepository;
 
     #[Route('/orders', name: 'orders', methods: ["GET"], format: "json")]
-    public function index(OrderRepository $orderRepository): JsonResponse
+    public function indexOrder(Request $request): JsonResponse
     {
-        return $this->json($orderRepository->findAll(), context: ['groups' => ['order']]);
+        $limit = $request->query->get('limit');
+        $page = $request->query->get('page');
+
+        // Convert to int if not null, otherwise keep as null
+        $limit = $limit !== null ? (int)$limit : 10;
+        $page = $page !== null ? (int)$page : 1;
+
+        return $this->json($this->orderRepository->getPaginatedResults($page, $limit), context: ['groups' => ['order']]);
     }
 
     #[Route('/orders/{id}', name: 'order_get', methods: ["GET"])]
-    public function get(Order $order): JsonResponse
+    public function getOrder(Order $order): JsonResponse
     {
         return $this->json($order, context: ['groups' => ['order']]);
     }
 
     #[Route('/orders', name: 'order_create', methods: ["POST"], format: "json")]
-    public function create(Request $request): JsonResponse
+    public function createOrder(Request $request): JsonResponse
     {
         try {
             $requestBody = json_decode($request->getContent(), true);
@@ -110,7 +114,7 @@ class OrderController extends AbstractController
      * @throws ORMException
      */
     #[Route("/orders/{id}", "order_delete", methods: ["DELETE"], format: "json")]
-    public function delete(Order $order): JsonResponse
+    public function deleteOrder(Order $order): JsonResponse
     {
         $this->orderRepository->remove($order);
 

@@ -2,11 +2,13 @@
 
 namespace App\Repository;
 
+use App\Entity\Category;
 use App\Entity\ProductCategory;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Contracts\Service\Attribute\Required;
 
@@ -51,6 +53,21 @@ class ProductCategoryRepository extends ServiceEntityRepository
             $this->entityManager->flush();
         }
     }
+
+    public function getPaginatedResults($page = 1, $limit = 10)
+    {
+        $query = $this->createQueryBuilder('pc')
+            ->select('pc')
+            ->getQuery();
+
+        $paginator = new Paginator($query);
+        $paginator->getQuery()
+            ->setFirstResult(($page - 1) * $limit)
+            ->setMaxResults($limit);
+
+        return $paginator->getIterator()->getArrayCopy();
+    }
+
 
     //    /**
     //     * @return ProductCategory[] Returns an array of ProductCategory objects

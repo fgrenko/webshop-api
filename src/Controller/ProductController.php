@@ -6,7 +6,6 @@ use App\Entity\Product;
 use App\OptionsResolver\ProductOptionsResolver;
 use App\Repository\ProductRepository;
 use App\Repository\UserRepository;
-use App\Service\ProductService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\ORM\OptimisticLockException;
@@ -29,8 +28,6 @@ class ProductController extends AbstractController
     #[Required]
     public ProductOptionsResolver $productOptionsResolver;
     #[Required]
-    public ProductService $productService;
-    #[Required]
     public ProductRepository $productRepository;
     #[Required]
     public ValidatorInterface $validator;
@@ -39,31 +36,42 @@ class ProductController extends AbstractController
 
     /**
      * @throws BadRequestHttpException
+     * @throws Exception
      */
     #[Route('/products', name: 'products', methods: ["GET"], format: "json")]
-    public function index(Request $request): JsonResponse
+    public function indexProduct(Request $request): JsonResponse
     {
-        $options = $request->query->all();
-        $options['user_id'] = $request->query->getInt('user_id');
-        $resolvedOptions = $this->productOptionsResolver->configureIndexOptions()->resolve($options);
-        $products = $this->productService->getPaginatedResults($resolvedOptions['user_id']);
+        $userId = $request->query->get('user_id');
+        $limit = $request->query->get('limit');
+        $page = $request->query->get('page');
+
+        // Convert to int if not null, otherwise keep as null
+        $userId = $userId !== null ? (int)$userId : null;
+        $limit = $limit !== null ? (int)$limit : 10;
+        $page = $page !== null ? (int)$page : 1;
+
+
+        $products = $this->productRepository->getPaginatedResults($userId, $page, $limit);
         return $this->json($products, context: ['groups' => ['product']]);
     }
 
 
     #[Route('/products/{id}', name: 'product_get', methods: ["GET"], format: "json")]
-    public function get(Product $product, Request $request, UserRepository $userRepository): JsonResponse
+    public function getProduct(Product $product, Request $request, UserRepository $userRepository): JsonResponse
     {
-        $options = $request->query->all();
-        $options['user_id'] = $request->query->getInt('user_id');
-        $resolvedOptions = $this->productOptionsResolver->configureIndexOptions()->resolve($options);
-        $user = $userRepository->find($resolvedOptions['user_id']);
+        $userId = $request->query->get('user_id');
+        $userId = $userId !== null ? (int)$userId : null;
+
+        $user = null;
+        if ($userId) {
+            $user = $userRepository->find($userId);
+        }
         $product->setPrice($this->productRepository->findPriceForUser($product, $user));
         return $this->json($product, context: ['groups' => ['product']]);
     }
 
     #[Route('/products', name: 'product_create', methods: ["POST"], format: "json")]
-    public function create(Request $request): JsonResponse
+    public function createProduct(Request $request): JsonResponse
     {
         try {
             $requestBody = json_decode($request->getContent(), true);
@@ -95,7 +103,7 @@ class ProductController extends AbstractController
      * @throws ORMException
      */
     #[Route("/products/{id}", "product_delete", methods: ["DELETE"], format: "json")]
-    public function delete(Product $product): JsonResponse
+    public function deleteProduct(Product $product): JsonResponse
     {
         $this->productRepository->remove($product);
 
@@ -103,7 +111,7 @@ class ProductController extends AbstractController
     }
 
     #[Route("/products/{id}", "product_update", methods: ["PATCH", "PUT"], format: "json")]
-    public function update(Product $product, Request $request, EntityManagerInterface $manager): JsonResponse
+    public function updateProduct(Product $product, Request $request, EntityManagerInterface $manager): JsonResponse
     {
         $isPutMethod = $request->getMethod() === "PUT";
         try {

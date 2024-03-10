@@ -29,8 +29,8 @@ class Product
     #[ORM\Column(length: 255, nullable: true)]
     #[Assert\Length(max: 255)]
     private ?string $description = null;
-    #[Groups(["product_category", "product", "category", "price_list", "contract_list"])]
-    #[ORM\Column]
+    #[Groups(["product_category", "product", "category"])]
+    #[ORM\Column(type: 'decimal', scale: 2)]
     #[Assert\NotBlank]
     private ?float $price = null;
     #[Groups(["product_category", "product", "category", "price_list", "contract_list"])]
@@ -38,7 +38,7 @@ class Product
     #[Assert\NotBlank]
     private ?bool $published = null;
 
-    #[Groups(["product_category", "product"])]
+    #[Groups(["product"])]
     #[ORM\OneToMany(targetEntity: ProductCategory::class, mappedBy: 'product', orphanRemoval: true)]
     private Collection $productCategories;
 

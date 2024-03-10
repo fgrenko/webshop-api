@@ -61,7 +61,7 @@ class Order
     private Collection $orderProducts;
 
     #[Groups(["order"])]
-    #[ORM\Column]
+    #[ORM\Column(type: 'decimal', scale: 2)]
     private ?float $totalPrice = null;
 
     public function __construct()

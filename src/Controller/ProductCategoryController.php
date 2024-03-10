@@ -40,39 +40,43 @@ class ProductCategoryController extends AbstractController
 
     //TODO: add pagination
     #[Route('/product-categories', name: 'product_categories', methods: ["GET"], format: "json")]
-    public function index(ProductCategoryRepository $productCategoryRepository): JsonResponse
+    public function indexProductCategory(Request $request): JsonResponse
     {
-        return $this->json($productCategoryRepository->findAll(), context: ['groups' => ['product_category']]);
+        $limit = $request->query->get('limit');
+        $page = $request->query->get('page');
+
+        // Convert to int if not null, otherwise keep as null
+        $limit = $limit !== null ? (int)$limit : 10;
+        $page = $page !== null ? (int)$page : 1;
+
+        return $this->json($this->productCategoryRepository->getPaginatedResults($page, $limit), context: ['groups' => ['product_category']]);
     }
 
     #[Route('/product-categories/{id}', name: 'product_categories_get', methods: ["GET"], format: "json")]
-    public function get(ProductCategory $productCategory): JsonResponse
+    public function getProductCategory(ProductCategory $productCategory): JsonResponse
     {
         return $this->json($productCategory);
     }
 
     #[Route('/product-categories', name: 'product_categories_create', methods: ["POST"], format: "json")]
-    public function create(Request $request): JsonResponse
+    public function createProductCategory(Request $request): JsonResponse
     {
         try {
             $requestBody = json_decode($request->getContent(), true);
             $fields = $this->productCategoryOptionsResolver->configureCreateOptions()->resolve($requestBody);
+            $category = $this->categoryRepository->find($fields['category']);
+            $product = $this->productRepository->find($fields['product']);
             do {
                 $productCategory = new ProductCategory();
-                $category = $this->categoryRepository->find($fields['category']);
                 $productCategory->setCategory($category);
-                $product = $this->productRepository->find($fields['product']);
                 $productCategory->setProduct($product);
-
                 $errors = $this->validator->validate($productCategory);
                 if (count($errors) > 0) {
                     throw new InvalidArgumentException((string)$errors);
                 }
                 $this->productCategoryRepository->add($productCategory, false);
                 $category = $category->getParent();
-
             } while ($category && !$this->productCategoryRepository->findOneBy(["product" => $product, "category" => $category]));
-
             $this->manager->flush();
 
             return $this->json($productCategory, status: Response::HTTP_CREATED, context: ['groups' => ['product_category']]);
@@ -88,7 +92,7 @@ class ProductCategoryController extends AbstractController
      * @throws ORMException
      */
     #[Route("/product-categories/{id}", "product_categories_delete", methods: ["DELETE"], format: "json")]
-    public function delete(ProductCategory $productCategory): JsonResponse
+    public function deleteProductCategory(ProductCategory $productCategory): JsonResponse
     {
         $this->productCategoryRepository->remove($productCategory);
 
@@ -96,7 +100,7 @@ class ProductCategoryController extends AbstractController
     }
 
     #[Route("/product-categories/{id}", "product_categories_update", methods: ["PATCH", "PUT"], format: "json")]
-    public function update(ProductCategory $productCategory, Request $request): JsonResponse
+    public function updateProductCategory(ProductCategory $productCategory, Request $request): JsonResponse
     {
         $isPutMethod = $request->getMethod() === "PUT";
         try {
