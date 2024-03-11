@@ -1,0 +1,880 @@
+{
+	"info": {
+		"_postman_id": "d64c1f35-0724-44dd-b315-d5ea4662c46c",
+		"name": "Webshop",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "21887813"
+	},
+	"item": [
+		{
+			"name": "Get paginated products",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:80/api/products?page=1&limit=10",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"products"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "1"
+						},
+						{
+							"key": "limit",
+							"value": "10"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get filtered products",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:80/api/products?page=1&limit=10&minPrice=1500&maxPrice=8000&sort[name]=desc",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"products"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "1"
+						},
+						{
+							"key": "limit",
+							"value": "10"
+						},
+						{
+							"key": "minPrice",
+							"value": "1500"
+						},
+						{
+							"key": "maxPrice",
+							"value": "8000"
+						},
+						{
+							"key": "sort[name]",
+							"value": "desc"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get single product",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:80/api/products/ABC-12345-S-BL?user_id=1",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"products",
+						"ABC-12345-S-BL"
+					],
+					"query": [
+						{
+							"key": "user_id",
+							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create product",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\":\"Jabuka\",\n    \"sku\":\"DJSJ-2352-K-DS\",\n    \"price\":4532.45,\n    \"published\":true,\n    \"description\":\"Jabuka crvena\"\n}"
+				},
+				"url": {
+					"raw": "localhost:80/api/products",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"products"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete product",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "localhost:80/api/products/SDKJS-12312-K-KD",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"products",
+						"SDKJS-12312-K-KD"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Change all requred values in product",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\":\"Jabuka 1\",\n    \"sku\":\"SDKJS-12312-K-KD\",\n    \"price\":34213.23,\n    \"published\":false\n}"
+				},
+				"url": {
+					"raw": "localhost:80/api/products/SDKJS-12312-K-KD",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"products",
+						"SDKJS-12312-K-KD"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Change single value in product",
+			"request": {
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\":\"Granny smith jabuka\"\n}"
+				},
+				"url": {
+					"raw": "localhost:80/api/products/KFKS-3231-SF-S",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"products",
+						"KFKS-3231-SF-S"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get paginated contract lists",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:80/api/contract-lists?page=1&limit=10",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"contract-lists"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "1"
+						},
+						{
+							"key": "limit",
+							"value": "10"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get single contract list",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:80/api/contract-lists/1",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"contract-lists",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create contract list",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"product\":\"KFDD-9385-K-KJ\",\n    \"price\":2321.23,\n    \"user\":1\n}"
+				},
+				"url": {
+					"raw": "localhost:80/api/contract-lists",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"contract-lists"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete contract list",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "localhost:80/api/contract-lists/2",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"contract-lists",
+						"2"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Change all required values in contract list",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": " {\n     \"product\":\"KFDD-9385-K-KJ\",\n    \"price\":2321.23,\n    \"user\":1\n }"
+				},
+				"url": {
+					"raw": "localhost:80/api/contract-lists/1",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"contract-lists",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Change a field in contract list",
+			"request": {
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"price\":123.23\n}"
+				},
+				"url": {
+					"raw": "localhost:80/api/contract-lists/1",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"contract-lists",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get paginated categories",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:80/api/categories?page=1&limit=10",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"categories"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "1"
+						},
+						{
+							"key": "limit",
+							"value": "10"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get single category",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:80/api/categories/1",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"categories",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get single category products",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:80/api/categories/1/products?page=1&limit=10",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"categories",
+						"1",
+						"products"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "1"
+						},
+						{
+							"key": "limit",
+							"value": "10"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create new category",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\":\"Kategorija test\",\n    \"description\":\"Neki opis\",\n    \"parent\":1\n}"
+				},
+				"url": {
+					"raw": "localhost:80/api/categories",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"categories"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete category",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "localhost:80/api/categories/7",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"categories",
+						"7"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Change all required values in a category",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\":\"Drugo ime\",\n    \"description\":\"Drugi description\"\n}"
+				},
+				"url": {
+					"raw": "localhost:80/api/categories/1",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"categories",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Change a single field in a category",
+			"request": {
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\":\"Zamjensko ime\"\n}"
+				},
+				"url": {
+					"raw": "localhost:80/api/categories/1",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"categories",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get paginated orders",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:80/api/orders?page=1&limit=10",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"orders"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "1"
+						},
+						{
+							"key": "limit",
+							"value": "10"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get single order",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:80/api/orders/1",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"orders",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create order",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"products\":{\n        \"ABC-34322-S-BL\":2,\n        \"JFDH-4313-K-SD\":1\n    },\n    \"buyer\":1,\n    \"priceModificators\": [\"VAT\"]\n}"
+				},
+				"url": {
+					"raw": "localhost:80/api/orders",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"orders"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete order",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "localhost:80/api/orders/1",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"orders",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get paginated price lists",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:80/api/price-lists?page=1&limit=10",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"price-lists"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "1"
+						},
+						{
+							"key": "limit",
+							"value": "10"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get single price list",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:80/api/price-lists/1",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"price-lists",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create price list",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"userType\":0,\n    \"price\":235.23,\n    \"product\":\"FSA-2322-S-BL\",\n    \"name\":\"price lista\"\n}"
+				},
+				"url": {
+					"raw": "localhost:80/api/price-lists",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"price-lists"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete price list",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "localhost:80/api/price-lists/1",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"price-lists",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Change all required fields in price list",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"userType\":1,\n    \"price\":235.23,\n    \"product\":\"FSA-2322-S-BL\",\n    \"name\":\"price list1\"\n}"
+				},
+				"url": {
+					"raw": "localhost:80/api/price-lists/1",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"price-lists",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Change single field in price list",
+			"request": {
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\":\"novo ime\"\n}"
+				},
+				"url": {
+					"raw": "localhost:80/api/price-lists/1",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"price-lists",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get paginated product categories",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:80/api/product-categories?page=1&limit=10",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"product-categories"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "1"
+						},
+						{
+							"key": "limit",
+							"value": "10"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get single product category",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:80/api/product-categories/1",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"product-categories",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create product category",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"category\":2,\n    \"product\":\"SDSA-12321-S-LDS\"\n}"
+				},
+				"url": {
+					"raw": "localhost:80/api/product-categories",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"product-categories"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete product category",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "localhost:80/api/product-categories/1",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"product-categories",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Change all required fields in product category",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"category\":2,\n    \"product\":\"SDSA-12321-S-LDS\"\n}"
+				},
+				"url": {
+					"raw": "localhost:80/api/product-categories/1",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"product-categories",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Change a single field in product category",
+			"request": {
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"category\":3\n}"
+				},
+				"url": {
+					"raw": "localhost:80/api/product-categories/1",
+					"host": [
+						"localhost"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"product-categories",
+						"1"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

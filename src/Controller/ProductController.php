@@ -39,28 +39,9 @@ class ProductController extends AbstractController
     #[Route('/products', name: 'products', methods: ["GET"], format: "json")]
     public function indexProduct(Request $request): JsonResponse
     {
-        $userId = $request->query->get('user_id');
-        $limit = $request->query->get('limit');
-        $page = $request->query->get('page');
-
-        // Convert to int if not null, otherwise keep as null
-        $userId = $userId !== null ? (int)$userId : null;
-        $limit = $limit !== null ? (int)$limit : 10;
-        $page = $page !== null ? (int)$page : 1;
-
-        $products = $this->productRepository->getPaginatedResults($userId, $page, $limit);
+        $products = $this->productRepository->getFilteredResults($request->query->all());
         return $this->json($products, context: ['groups' => ['product']]);
     }
-
-    /**
-     * @throws Exception
-     */
-    #[Route('/products/filter', name: 'products_filter', methods: ["GET"], format: "json")]
-    public function filterProduct(Request $request): JsonResponse
-    {
-        return $this->json($this->productRepository->getFilteredResults($request->query->all()), context: ['groups' => ['product']]);
-    }
-
 
     #[Route('/products/{id}', name: 'product_get', methods: ["GET"], format: "json")]
     public function getProduct(Product $product, Request $request, UserRepository $userRepository): JsonResponse
@@ -72,8 +53,8 @@ class ProductController extends AbstractController
         if ($userId) {
             $user = $userRepository->find($userId);
         }
-        $product->setPrice($this->productRepository->findPriceForUser($product, $user));
-        return $this->json($product, context: ['groups' => ['product']]);
+
+        return $this->json($this->productRepository->getProductWithTotalPrice($product, $user), context: ['groups' => ['product']]);
     }
 
     #[Route('/products', name: 'product_create', methods: ["POST"], format: "json")]
@@ -123,7 +104,6 @@ class ProductController extends AbstractController
         try {
             $requestBody = json_decode($request->getContent(), true);
             $fields = $this->productOptionsResolver->configureCreateOptions($isPutMethod)->resolve($requestBody);
-
             foreach ($fields as $field => $value) {
                 switch ($field) {
                     case "name":

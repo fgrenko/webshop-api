@@ -10,6 +10,7 @@ class CategoryOptionsResolver extends OptionsResolver
     {
         $this->setDefined("name")->setAllowedTypes("name", "string");
         $this->setDefined("description")->setAllowedTypes("name", "string");
+        $this->setDefined("parent")->setAllowedTypes("parent", "int");
         if ($isRequired) {
             $this->setRequired("name");
         }
