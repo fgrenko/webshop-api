@@ -3,13 +3,12 @@
 ### 1. Run the docker container
 `docker compose up -d`
 
-### 2. Install the required packages 
-`docker compose exec php composer install`
 
-### 3. Execute migrations
-`docker compose exec php bin/console doctrine:migrations:migrate`
+You don't have to manually install packages using Composer because the Dockerfile 
+takes care of that. Additionally, the frankenphp script ensures that all migrations 
+are executed. Please wait until all the scripts finish executing.
 
-### 4. Execute fixtures
+### 2. Load fixtures
 `docker compose exec php bin/console doctrine:fixtures:load`
 
-### 5. Load postman collection from `\postman` and use the endpoints
+### 3. Load postman collection from `\postman` and use the endpoints
