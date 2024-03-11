@@ -25,17 +25,16 @@ class Product
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
     private ?string $name = null;
-    #[Groups(["product_category", "product", "category", "price_list", "contract_list"])]
+    #[Groups(["product_category", "product", "price_list", "contract_list"])]
     #[ORM\Column(length: 255, nullable: true)]
     #[Assert\Length(max: 255)]
     private ?string $description = null;
-    #[Groups(["product_category", "product", "category"])]
+    #[Groups(["product_category", "product"])]
     #[ORM\Column(type: 'decimal', scale: 2)]
     #[Assert\NotBlank]
     private ?float $price = null;
     #[Groups(["product_category", "product", "category", "price_list", "contract_list"])]
     #[ORM\Column]
-    #[Assert\NotBlank]
     private ?bool $published = null;
 
     #[Groups(["product"])]
@@ -112,7 +111,7 @@ class Product
         return $this->published;
     }
 
-    public function setPublished(bool $published): static
+    public function setPublished(?bool $published): static
     {
         $this->published = $published;
 

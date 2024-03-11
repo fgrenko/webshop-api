@@ -9,6 +9,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Contracts\Service\Attribute\Required;
@@ -72,7 +73,7 @@ class ProductRepository extends ServiceEntityRepository
 
         if ($user) {
             $queryBuilder
-                ->andWhere('cl.user = :userId OR (pl.type = :userType AND cl.user IS NULL)')
+                ->andWhere('cl.user = :userId OR (pl.userType = :userType AND cl.user IS NULL)')
                 ->setParameter('userId', $user->getId())
                 ->setParameter('userType', $user->getType());
         }
@@ -84,33 +85,6 @@ class ProductRepository extends ServiceEntityRepository
         }
 
         return $product->getPrice();
-    }
-
-    /**
-     * @throws \Exception
-     */
-    public function getPaginatedResults(int $userId = null, $page = 1, $limit = 10)
-    {
-        $user = null;
-        if ($userId) {
-            $user = $this->userRepository->find($userId);
-        }
-        $query = $this->createQueryBuilder('p')
-            ->select('p', 'pl') // Select both Product and PriceList
-            ->leftJoin('p.priceLists', 'pl') // Left join PriceList entity
-            ->getQuery();
-
-        $paginator = new Paginator($query);
-        $paginator->getQuery()
-            ->setFirstResult(($page - 1) * $limit)
-            ->setMaxResults($limit);
-
-        $products = $paginator->getIterator()->getArrayCopy();
-        foreach ($products as &$product) {
-            $product->setPrice($this->findPriceForUser($product, $user));
-        }
-
-        return $products;
     }
 
     /**
@@ -141,59 +115,25 @@ class ProductRepository extends ServiceEntityRepository
      */
     public function getFilteredResults(array $options)
     {
-        $limit = array_key_exists('limit', $options) ? (int)$options['limit'] : 10;
-        $page = array_key_exists('page', $options) ? (int)$options['page'] : 1;
-
-
         $query = $this->createQueryBuilder('p')
             ->select('p', 'CASE
-            WHEN cl.price IS NOT NULL THEN cl.price
-            WHEN pl.price IS NOT NULL THEN pl.price
+            WHEN (cl.price IS NOT NULL AND :userExists = true) THEN cl.price
+            WHEN (pl.price IS NOT NULL AND :userExists = true) THEN pl.price
             ELSE p.price
             END AS real_price')
             ->leftJoin('p.contractLists', 'cl')
-            ->leftJoin('p.priceLists', 'pl');
+            ->leftJoin('p.priceLists', 'pl')
+            ->setParameter("userExists", array_key_exists('user_id', $options));
 
-        if (array_key_exists('user_id', $options)) {
-            $options['user_id'] = $options['user_id'] !== null ? (int)$options['user_id'] : null;
-            $user = $this->userRepository->find($options['user_id']);
-            if ($user) {
-                $query
-                    ->andWhere('(
-                    cl.user = :userId OR
-                    (pl.type = :userType AND cl.user IS NULL) OR
-                    (cl.id IS NULL AND pl.id IS NULL)
-                )')
-                    ->setParameter('userId', $user->getId())
-                    ->setParameter('userType', $user->getType());
-            }
-        }
+        $this->applyUserFilters($query, $options);
+        $this->applyNameFilter($query, $options);
+        $this->applyCategoryIdFilter($query, $options);
+        $this->applyPriceFilters($query, $options);
+        $this->applySorting($query, $options);
 
-        if (array_key_exists('name', $options)) {
-            $query
-                ->andWhere('p.name = :name')
-                ->setParameter('name', $options['name']);
-        }
 
-        if (array_key_exists('categoryId', $options)) {
-            $query
-                ->join('p.productCategories', 'pc')
-                ->andWhere('pc.category = :categoryId') // Changed '==' to '='
-                ->setParameter('categoryId', $options['categoryId']);
-        }
-
-        if (array_key_exists('minPrice', $options)) {
-            $query
-                ->andHaving('real_price > :minPrice')
-                ->setParameter('minPrice', (float)$options['minPrice']);
-        }
-
-        if (array_key_exists('maxPrice', $options)) {
-            $query
-                ->andHaving('real_price < :maxPrice')
-                ->setParameter('maxPrice', (float)$options['maxPrice']);
-        }
-
+        $limit = array_key_exists('limit', $options) ? (int)$options['limit'] : 10;
+        $page = array_key_exists('page', $options) ? (int)$options['page'] : 1;
         $paginator = new Paginator($query);
         $paginator->getQuery()
             ->setFirstResult(($page - 1) * $limit)
@@ -202,6 +142,22 @@ class ProductRepository extends ServiceEntityRepository
         return $paginator->getIterator()->getArrayCopy();
     }
 
+    public function getProductWithTotalPrice(Product $product, ?User $user)
+    {
+        return $this->createQueryBuilder('p')
+            ->select('p', 'CASE
+            WHEN (cl.price IS NOT NULL AND :userExists = true) THEN cl.price
+            WHEN (pl.price IS NOT NULL AND :userExists = true) THEN pl.price
+            ELSE p.price
+            END AS real_price')
+            ->leftJoin('p.contractLists', 'cl')
+            ->leftJoin('p.priceLists', 'pl')
+            ->setParameter('userExists', (boolean)$user)
+            ->andWhere('p.sku = :sku')
+            ->setParameter('sku', $product->getSku())
+            ->getQuery()
+            ->getResult();
+    }
 
 //    /**
 //     * @return Product[] Returns an array of Product objects
@@ -227,4 +183,62 @@ class ProductRepository extends ServiceEntityRepository
 //            ->getOneOrNullResult()
 //        ;
 //    }
+    private function applyUserFilters(QueryBuilder $query, array $options): void
+    {
+        if (array_key_exists('user_id', $options)) {
+            $options['user_id'] = $options['user_id'] !== null ? (int)$options['user_id'] : null;
+            $user = $this->userRepository->find($options['user_id']);
+            if ($user) {
+                $query
+                    ->andWhere('(
+                    cl.user = :userId OR
+                    (pl.userType = :userType AND cl.user IS NULL) OR
+                    (cl.id IS NULL AND pl.id IS NULL)
+                )')
+                    ->setParameter('userId', $user->getId())
+                    ->setParameter('userType', $user->getType());
+            }
+        }
+    }
+
+    private function applyNameFilter(QueryBuilder $query, array $options): void
+    {
+        if (array_key_exists('name', $options)) {
+            $query
+                ->andWhere('p.name = :name')
+                ->setParameter('name', $options['name']);
+        }
+    }
+
+    private function applyCategoryIdFilter(QueryBuilder $query, array $options): void
+    {
+        if (array_key_exists('categoryId', $options)) {
+            $query
+                ->join('p.productCategories', 'pc')
+                ->andWhere('pc.category = :categoryId')
+                ->setParameter('categoryId', $options['categoryId']);
+        }
+    }
+
+    private function applyPriceFilters(QueryBuilder $query, array $options): void
+    {
+        if (array_key_exists('minPrice', $options)) {
+            $query
+                ->andHaving('real_price > :minPrice')
+                ->setParameter('minPrice', (float)$options['minPrice']);
+        }
+
+        if (array_key_exists('maxPrice', $options)) {
+            $query
+                ->andHaving('real_price < :maxPrice')
+                ->setParameter('maxPrice', (float)$options['maxPrice']);
+        }
+    }
+
+    private function applySorting(QueryBuilder $query, array $options): void
+    {
+        if (array_key_exists('sort', $options)) {
+            $query->orderBy('p.' . array_key_first($options['sort']), array_values($options['sort'])[0]);
+        }
+    }
 }

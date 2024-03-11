@@ -7,10 +7,12 @@ use App\OptionsResolver\ContractListOptionsResolver;
 use App\Repository\ContractListRepository;
 use App\Repository\ProductRepository;
 use App\Repository\UserRepository;
+use App\Service\PaginatorService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMInvalidArgumentException;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -21,8 +23,6 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\Service\Attribute\Required;
 
-
-//TODO: add pagination
 #[Route("/api")]
 class ContractListController extends AbstractController
 {
@@ -36,16 +36,13 @@ class ContractListController extends AbstractController
     public ProductRepository $productRepository;
     #[Required]
     public UserRepository $userRepository;
+    #[Required]
+    public PaginatorService $paginatorService;
 
     #[Route('/contract-lists', name: 'contract_list', methods: ["GET"], format: "json")]
     public function indexContractList(Request $request): JsonResponse
     {
-        $limit = $request->query->get('limit');
-        $page = $request->query->get('page');
-
-        // Convert to int if not null, otherwise keep as null
-        $limit = $limit !== null ? (int)$limit : 10;
-        $page = $page !== null ? (int)$page : 1;
+        list($page, $limit) = $this->paginatorService->getPageAndLimit($request);
 
         return $this->json($this->contractListRepository->getPaginatedResults($page, $limit), context: ['groups' => ['contract_list']]);
     }
@@ -62,12 +59,21 @@ class ContractListController extends AbstractController
         try {
             $requestBody = json_decode($request->getContent(), true);
             $fields = $this->contractListOptionsResolver->configureCreateOptions()->resolve($requestBody);
-            $contractList = new ContractList();
-            $contractList->setPrice($fields['price']);
             $product = $this->productRepository->find($fields['product']);
-            $contractList->setProduct($product);
             $user = $this->userRepository->find($fields['user']);
-            $contractList->setUser($user);
+
+            if (!$user) {
+                throw new \Exception("User doesn't exist.");
+            }
+            if (!$product) {
+                throw  new \Exception("Product doesn't exist.");
+            }
+
+            $contractList = new ContractList();
+            $contractList
+                ->setPrice($fields['price'])
+                ->setProduct($product)
+                ->setUser($user);
 
             $errors = $this->validator->validate($contractList);
             if (count($errors) > 0) {

@@ -12,7 +12,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
 #[ORM\UniqueConstraint(name: "unique_product_category", columns: ['product_id', 'category_id'])]
 class ProductCategory
 {
-    #[Groups(["product_category", "product", "category"])]
+    #[Groups(["product_category", "product"])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]

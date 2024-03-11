@@ -10,10 +10,13 @@ use App\Repository\OrderRepository;
 use App\Repository\PriceModificatorRepository;
 use App\Repository\ProductRepository;
 use App\Repository\UserRepository;
+use App\Service\PaginatorService;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMInvalidArgumentException;
 use InvalidArgumentException;
+use Phalcon\Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -42,16 +45,13 @@ class OrderController extends AbstractController
     public OrderProductRepository $orderProductRepository;
     #[Required]
     public PriceModificatorRepository $priceModificatorRepository;
+    #[Required]
+    public PaginatorService $paginatorService;
 
     #[Route('/orders', name: 'orders', methods: ["GET"], format: "json")]
     public function indexOrder(Request $request): JsonResponse
     {
-        $limit = $request->query->get('limit');
-        $page = $request->query->get('page');
-
-        // Convert to int if not null, otherwise keep as null
-        $limit = $limit !== null ? (int)$limit : 10;
-        $page = $page !== null ? (int)$page : 1;
+        list($page, $limit) = $this->paginatorService->getPageAndLimit($request);
 
         return $this->json($this->orderRepository->getPaginatedResults($page, $limit), context: ['groups' => ['order']]);
     }
@@ -63,32 +63,29 @@ class OrderController extends AbstractController
     }
 
     #[Route('/orders', name: 'order_create', methods: ["POST"], format: "json")]
-    public function createOrder(Request $request): JsonResponse
+    public function createOrder(Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
+        $entityManager->beginTransaction();
+
         try {
             $requestBody = json_decode($request->getContent(), true);
             $fields = $this->orderOptionsResolver->configureCreateOptions()->resolve($requestBody);
-            $userId = (int)$request->query->get("user_id");
-            $user = $this->userRepository->find($userId);
-
-            $order = new Order();
 
             $buyer = $this->userRepository->find($fields['buyer']);
-            $order->setBuyer($buyer);
-
-            $priceModificators = array_map(function ($priceModificatorName) {
-                return $this->priceModificatorRepository->findOneBy(['name' => $priceModificatorName]);
-            }, $fields['priceModificators']);
-
-            $errors = $this->validator->validate($order);
-            if (count($errors) > 0) {
-                throw new InvalidArgumentException((string)$errors);
+            if (!$buyer) {
+                throw new \Exception("User doesn't exist.");
             }
+
+            $order = new Order();
+            $order->setBuyer($buyer);
 
             foreach ($fields['products'] as $sku => $quantity) {
                 $orderProduct = new OrderProduct();
                 $product = $this->productRepository->find($sku);
-                $price = $this->productRepository->findPriceForUser($product, $user);
+                if (!$product) {
+                    throw new Exception("Product " . $sku . " doesn't exist");
+                }
+                $price = $this->productRepository->findPriceForUser($product, $buyer);
                 $orderProduct
                     ->setProduct($product)
                     ->setQuantity($quantity)
@@ -98,7 +95,12 @@ class OrderController extends AbstractController
                 $order->addOrderProduct($orderProduct);
             }
 
-            $order->setTotalPrice($priceModificators);
+            $order->setTotalPrice($this->priceModificatorRepository->findBy(['name' => $fields['priceModificators']]));
+
+            $errors = $this->validator->validate($order);
+            if (count($errors) > 0) {
+                throw new InvalidArgumentException((string)$errors);
+            }
 
             $this->orderRepository->add($order);
             return $this->json($order, status: Response::HTTP_CREATED, context: ['groups' => ['order']]);

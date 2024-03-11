@@ -11,12 +11,12 @@ class PriceListOptionsResolver extends OptionsResolver
         $this->setDefined("name")->setAllowedTypes("name", "string");
         $this->setDefined("price")->setAllowedTypes("price", "float");
         $this->setDefined("product")->setAllowedTypes("product", "string");
-        $this->setDefined("type")->setAllowedTypes("type", "int");
+        $this->setDefined("userType")->setAllowedTypes("userType", "int");
         if ($isRequired) {
             $this->setRequired("name");
             $this->setRequired("price");
             $this->setRequired("product");
-            $this->setRequired("type");
+            $this->setRequired("userType");
         }
         return $this;
     }

@@ -7,6 +7,7 @@ use App\OptionsResolver\ProductCategoryOptionsResolver;
 use App\Repository\CategoryRepository;
 use App\Repository\ProductCategoryRepository;
 use App\Repository\ProductRepository;
+use App\Service\PaginatorService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\ORM\OptimisticLockException;
@@ -37,17 +38,13 @@ class ProductCategoryController extends AbstractController
     public CategoryRepository $categoryRepository;
     #[Required]
     public EntityManagerInterface $manager;
+    #[Required]
+    public PaginatorService $paginatorService;
 
-    //TODO: add pagination
     #[Route('/product-categories', name: 'product_categories', methods: ["GET"], format: "json")]
     public function indexProductCategory(Request $request): JsonResponse
     {
-        $limit = $request->query->get('limit');
-        $page = $request->query->get('page');
-
-        // Convert to int if not null, otherwise keep as null
-        $limit = $limit !== null ? (int)$limit : 10;
-        $page = $page !== null ? (int)$page : 1;
+        list($page, $limit) = $this->paginatorService->getPageAndLimit($request);
 
         return $this->json($this->productCategoryRepository->getPaginatedResults($page, $limit), context: ['groups' => ['product_category']]);
     }
@@ -55,7 +52,7 @@ class ProductCategoryController extends AbstractController
     #[Route('/product-categories/{id}', name: 'product_categories_get', methods: ["GET"], format: "json")]
     public function getProductCategory(ProductCategory $productCategory): JsonResponse
     {
-        return $this->json($productCategory);
+        return $this->json($productCategory, context: ['groups' => ['product_category']]);
     }
 
     #[Route('/product-categories', name: 'product_categories_create', methods: ["POST"], format: "json")]
@@ -65,7 +62,13 @@ class ProductCategoryController extends AbstractController
             $requestBody = json_decode($request->getContent(), true);
             $fields = $this->productCategoryOptionsResolver->configureCreateOptions()->resolve($requestBody);
             $category = $this->categoryRepository->find($fields['category']);
+            if (!$category) {
+                throw new \Exception("Category doesn't exist");
+            }
             $product = $this->productRepository->find($fields['product']);
+            if (!$product) {
+                throw new \Exception("Product doesn't exist");
+            }
             do {
                 $productCategory = new ProductCategory();
                 $productCategory->setCategory($category);

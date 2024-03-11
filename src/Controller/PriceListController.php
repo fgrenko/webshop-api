@@ -6,6 +6,7 @@ use App\Entity\PriceList;
 use App\OptionsResolver\PriceListOptionsResolver;
 use App\Repository\PriceListRepository;
 use App\Repository\ProductRepository;
+use App\Service\PaginatorService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\ORM\OptimisticLockException;
@@ -32,16 +33,13 @@ class PriceListController extends AbstractController
     public PriceListOptionsResolver $priceListOptionsResolver;
     #[Required]
     public ProductRepository $productRepository;
+    #[Required]
+    public PaginatorService $paginatorService;
 
     #[Route('/price-lists', name: 'price-list', methods: ["GET"], format: "json")]
     public function indexPriceList(Request $request): JsonResponse
     {
-        $limit = $request->query->get('limit');
-        $page = $request->query->get('page');
-
-        // Convert to int if not null, otherwise keep as null
-        $limit = $limit !== null ? (int)$limit : 10;
-        $page = $page !== null ? (int)$page : 1;
+        list($page, $limit) = $this->paginatorService->getPageAndLimit($request);
 
         return $this->json($this->priceListRepository->getPaginatedResults($page, $limit), context: ['groups' => ['price_list']]);
     }
@@ -63,8 +61,11 @@ class PriceListController extends AbstractController
             $priceList->setName($fields['name']);
             $priceList->setPrice($fields['price']);
             $product = $this->productRepository->find($fields['product']);
+            if (!$product) {
+                throw new \Exception("Product doesn't exist.");
+            }
             $priceList->setProduct($product);
-            $priceList->setType($fields['type']);
+            $priceList->setUserType($fields['userType']);
 
             $errors = $this->validator->validate($priceList);
             if (count($errors) > 0) {
@@ -110,10 +111,13 @@ class PriceListController extends AbstractController
                         break;
                     case "product":
                         $product = $this->productRepository->find($value);
+                        if (!$product) {
+                            throw new \Exception("Product doesn't exist.");
+                        }
                         $priceList->setProduct($product);
                         break;
-                    case "type":
-                        $priceList->setType($value);
+                    case "userType":
+                        $priceList->setUserType($value);
                         break;
                 }
             }
