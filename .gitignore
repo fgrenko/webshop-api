@@ -27,7 +27,6 @@
 
 /docker/db/data
 /.idea
-.env
 
 # Cache and logs (Symfony2)
 /app/cache/*
