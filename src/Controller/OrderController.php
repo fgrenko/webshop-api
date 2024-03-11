@@ -103,6 +103,8 @@ class OrderController extends AbstractController
             }
 
             $this->orderRepository->add($order);
+            $entityManager->commit();
+
             return $this->json($order, status: Response::HTTP_CREATED, context: ['groups' => ['order']]);
         } catch (\Exception $e) {
             throw new BadRequestHttpException($e->getMessage());
