@@ -2,7 +2,9 @@
 
 namespace App\DataFixtures;
 
+use App\Entity\Category;
 use App\Entity\PriceModificator;
+use App\Entity\Product;
 use App\Entity\ProductCategory;
 use App\Factory\CategoryFactory;
 use App\Factory\ContractListFactory;
@@ -42,29 +44,115 @@ class AppFixtures extends Fixture
 
     public function load(ObjectManager $manager): void
     {
+        $this->createCategories($manager);
+        $this->createProducts();
+        $this->createPriceModificators($manager);
+        $this->assignCategoriesToProducts($manager);
+        $this->createContractsAndPriceLists($manager);
+
+        $manager->flush();
+//        CategoryFactory::createMany(
+//            6,
+//            static function (int $i) {
+//                return [
+//                    'name' => self::CATEGORY_NAMES_ARRAY[$i - 1],
+//                ];
+//            }
+//        );
+//
+//        ProductFactory::createMany(
+//            11,
+//            static function (int $i) {
+//                return ['sku' => self::SKU_ARRAY[$i - 1], 'name' => "Product " . $i];
+//            }
+//        );
+//
+//        UserFactory::createMany(
+//            2,
+//            static function (int $i) {
+//                return ['type' => $i == 1 ? ROLE_RETAIL : ROLE_SERVICE];
+//            }
+//        );
+//
+//        $vat = new PriceModificator();
+//        $vat->setType(TYPE_VAT);
+//        $vat->setPercentage(23);
+//        $vat->setName("VAT");
+//        $manager->persist($vat);
+//
+//        $discount = new PriceModificator();
+//        $discount->setType(TYPE_DISCOUNT);
+//        $discount->setName("SPRING");
+//        $discount->setPercentage(5);
+//        $manager->persist($discount);
+//        $manager->flush();
+//
+//        $product = $this->productRepository->findOneBy(["sku" => self::SKU_ARRAY[1]]);
+//        $category1 = $this->categoryRepository->findOneBy(['name' => self::CATEGORY_NAMES_ARRAY[0]]);
+//        $category2 = $this->categoryRepository->findOneBy(['name' => self::CATEGORY_NAMES_ARRAY[1]]);
+//        $user1 = $this->userRepository->findOneBy(['type' => ROLE_RETAIL]);
+//
+//        $category2->setParent($category1);
+//        $manager->persist($category2);
+//
+//        foreach (self::SKU_ARRAY as $sku) {
+//            $productItem = $this->productRepository->findOneBy(["sku" => $sku]);
+//            $key = random_int(0, 5);
+//            $categoryItem = $this->categoryRepository->findOneBy(["name" => self::CATEGORY_NAMES_ARRAY[$key]]);
+//            $productCategory = new ProductCategory();
+//            $productCategory->setProduct($product)->setCategory($categoryItem);
+//            $manager->persist($productCategory);
+//            if ($categoryItem->getId() == $category2->getId()) {
+//                $productCategory1 = new ProductCategory();
+//                $productCategory1->setProduct($productItem)->setCategory($category1);
+//                $manager->persist($productCategory1);
+//            }
+//        }
+//
+//        ContractListFactory::createMany(
+//            1,
+//            static function () use ($product, $user1) {
+//                return ['user' => $user1, 'product' => $product];
+//            }
+//        );
+//
+//        PriceListFactory::createMany(
+//            1,
+//            static function () use ($product, $user1) {
+//                return ['userType' => ROLE_SERVICE, 'product' => $product];
+//            }
+//        );
+//
+//        $manager->flush();
+    }
+
+    private function createCategories(ObjectManager $manager): void
+    {
         CategoryFactory::createMany(
-            6,
-            static function (int $i) {
-                return [
-                    'name' => self::CATEGORY_NAMES_ARRAY[$i - 1],
-                ];
+            count(self::CATEGORY_NAMES_ARRAY),
+            function (int $i) {
+                return ['name' => self::CATEGORY_NAMES_ARRAY[$i - 1]];
             }
         );
 
+        $category1 = $manager->getRepository(Category::class)->findOneBy(["name" => self::CATEGORY_NAMES_ARRAY[0]]);
+        $category2 = $manager->getRepository(Category::class)->findOneBy(["name" => self::CATEGORY_NAMES_ARRAY[1]]);
+        $category2->setParent($category1);
+        $manager->persist($category2);
+    }
+
+    private function createProducts(): void
+    {
         ProductFactory::createMany(
-            11,
-            static function (int $i) {
-                return ['sku' => self::SKU_ARRAY[$i - 1], 'name' => "Product " . $i];
+            count(self::SKU_ARRAY),
+            function (int $i) {
+                return ['sku' => self::SKU_ARRAY[$i - 1], 'name' => "Product " . ($i)];
             }
         );
+    }
 
-        UserFactory::createMany(
-            2,
-            static function (int $i) {
-                return ['type' => $i == 1 ? ROLE_RETAIL : ROLE_SERVICE];
-            }
-        );
-
+    private function createPriceModificators(ObjectManager $manager): void
+    {
         $vat = new PriceModificator();
         $vat->setType(TYPE_VAT);
         $vat->setPercentage(23);
@@ -76,40 +164,33 @@ class AppFixtures extends Fixture
         $discount->setName("SPRING");
         $discount->setPercentage(5);
         $manager->persist($discount);
-        $manager->flush();
+    }
 
-        $product = $this->productRepository->findOneBy(["sku" => self::SKU_ARRAY[1]]);
-        $category1 = $this->categoryRepository->findOneBy(['name' => self::CATEGORY_NAMES_ARRAY[0]]);
-        $category2 = $this->categoryRepository->findOneBy(['name' => self::CATEGORY_NAMES_ARRAY[1]]);
-        $user1 = $this->userRepository->findOneBy(['type' => ROLE_RETAIL]);
+    private function assignCategoriesToProducts(ObjectManager $manager): void
+    {
+        foreach (self::SKU_ARRAY as $sku) {
+            $product = $manager->getRepository(Product::class)->findOneBy(["sku" => $sku]);
+            $randomInt = array_rand(self::CATEGORY_NAMES_ARRAY);
+            $category = $manager->getRepository(Category::class)->findOneBy(["name" => self::CATEGORY_NAMES_ARRAY[$randomInt]]);
+            $productCategory = new ProductCategory();
+            $productCategory->setProduct($product)->setCategory($category);
+            $manager->persist($productCategory);
 
-        $category2->setParent($category1);
-        $manager->persist($category2);
-
-        $productCategory = new ProductCategory();
-        $productCategory->setProduct($product);
-        $productCategory->setCategory($category2);
-        $manager->persist($productCategory);
-
-        $productCategory1 = new ProductCategory();
-        $productCategory1->setProduct($product);
-        $productCategory1->setCategory($category1);
-        $manager->persist($productCategory1);
-
-        ContractListFactory::createMany(
-            1,
-            static function () use ($product, $user1) {
-                return ['user' => $user1, 'product' => $product];
+            if ($randomInt == 1) {
+                $productCategoryParent = new ProductCategory();
+                $productCategoryParent->setCategory($category->getParent())->setProduct($product);
+                $manager->persist($productCategoryParent);
             }
-        );
+        }
+    }
 
-        PriceListFactory::createMany(
-            1,
-            static function () use ($product, $user1) {
-                return ['userType' => ROLE_SERVICE, 'product' => $product];
-            }
-        );
+    private function createContractsAndPriceLists(ObjectManager $manager): void
+    {
+        $userRetail = UserFactory::createOne(['type' => ROLE_RETAIL]);
+        $userService = UserFactory::createOne(['type' => ROLE_SERVICE]);
+        $product = $manager->getRepository(Product::class)->findOneBy(["sku" => self::SKU_ARRAY[0]]);
 
-        $manager->flush();
+        ContractListFactory::createOne(['user' => $userRetail, 'product' => $product]);
+        PriceListFactory::createOne(['userType' => ROLE_SERVICE, 'product' => $product]);
     }
 }
